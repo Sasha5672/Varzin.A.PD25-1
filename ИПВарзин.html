@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Госфонд: Денежные знаки и Купоны 1980-1990</title>
+    <style>
+        :root {
+            --soviet-red: #da291c;
+            --soviet-gold: #ffcc00;
+            --paper-bg: #e8e2d0;
+        }
+        
+        body { font-family: 'Courier New', Courier, monospace; background-color: #2b2b2b; color: #333; margin: 0; overflow-x: hidden; }
+
+        header { 
+            background: var(--soviet-red); color: var(--soviet-gold); padding: 30px; 
+            text-align: center; border-bottom: 5px solid var(--soviet-gold);
+            position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        header::before, header::after { content: "★"; font-size: 2rem; margin: 0 20px; vertical-align: middle; }
+
+        nav { background: #1a1a1a; display: flex; justify-content: center; border-bottom: 2px solid var(--soviet-gold); }
+        nav a { color: var(--soviet-gold); padding: 15px 25px; text-decoration: none; font-weight: bold; text-transform: uppercase; cursor: pointer; }
+        nav a:hover { background: var(--soviet-red); color: white; }
+
+        .search-section { padding: 25px; text-align: center; background: #333; }
+        #searchInput { padding: 12px; width: 50%; border: 2px solid var(--soviet-red); background: var(--paper-bg); font-family: inherit; font-weight: bold; }
+
+        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; padding: 30px; max-width: 1200px; margin: auto; }
+
+        .card { 
+            background: var(--paper-bg); border: 1px solid #bcb5a0; box-shadow: 5px 5px 0px #1a1a1a; 
+            position: relative; overflow: hidden; cursor: pointer; transition: 0.2s;
+        }
+        .card:hover { transform: scale(1.02); box-shadow: 8px 8px 0px var(--soviet-red); }
+
+        .card img { width: 100%; height: 180px; object-fit: contain; background: #d1ccbc; border-bottom: 1px solid #bcb5a0; filter: sepia(0.3); }
+        .card-content { padding: 15px; }
+        .tag { background: var(--soviet-red); color: white; padding: 2px 8px; font-size: 0.7rem; display: inline-block; margin-bottom: 10px; }
+
+        /* Модальное окно (Поп-ап) */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: var(--paper-bg); margin: 5% auto; padding: 30px; border: 3px solid var(--soviet-gold);
+            width: 80%; max-width: 600px; position: relative; box-shadow: 0 0 30px var(--soviet-red);
+        }
+        .close { color: var(--soviet-red); float: right; font-size: 30px; font-weight: bold; cursor: pointer; }
+        .modal-body img { width: 100%; max-height: 300px; object-fit: contain; margin-bottom: 20px; border: 1px solid #333; }
+        
+        .stamp {
+            border: 3px solid #8b0000; color: #8b0000; font-weight: bold; padding: 5px 10px;
+            display: inline-block; transform: rotate(-10deg); margin-top: 20px; font-size: 1.2rem;
+        }
+
+        footer { text-align: center; color: #777; padding: 20px; }
+    </style>
+</head>
+<body>
+
+<header><h1>Центральный Архив Денежных Знаков</h1></header>
+
+<nav>
+    <a onclick="filterCategory('купоны')">Разрезные купоны</a>
+    <a onclick="filterCategory('деньги')">Банкноты и Монеты</a>
+    <a onclick="filterCategory('все')">Весь реестр</a>
+</nav>
+
+<div class="search-section">
+    <input type="text" id="searchInput" placeholder="Введите поисковый запрос..." onkeyup="search()">
+</div>
+
+<div class="container" id="collection"></div>
+
+<!-- Модальное окно -->
+<div id="infoModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <div id="modalData" class="modal-body">
+            <!-- Сюда вставится инфо -->
+        </div>
+    </div>
+</div>
+
+<footer>Пролетарии всех стран, соединяйтесь! | 1980-1990.Made by Varzin.</footer>
+
+<script>
+    const database = [
+        { 
+            name: "1 копейка СССР", 
+            year: 1980, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=2a0000017a0abd48b841f87b74ac3c511a1f-4464889-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Самый мелкий номинал. В 1980 году на одну копейку можно было купить стакан газированной воды без сиропа или коробок спичек. Дизайн образца 1961 года."
+        },
+        { 
+            name: "5 рублей СССР", 
+            year: 1991, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=135533a29d96b6ab9945895de2dec867_l-8496937-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Банкнота периода 'Павловской реформы'. На лицевой стороне изображена Спасская башня Кремля. Выпускалась в условиях нарастающей инфляции."
+        },
+{ 
+            name: "1 рубль СССР Гагарин", 
+            year: 1981, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=3cefc3c3c543329f7d32b164100918c3_l-5345494-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "1 рубль 1981 года с изображением Юрия Гагарина — юбилейная монета, выпущенная в честь 20-летия первого полёта человека в космос. Она была выпущена 10 апреля 1981 года Ленинградским монетным двором.художник — В. А. Ермаков."
+        },
+        { 
+            name: "1 рубль СССР СБД", 
+            year: 1981, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=f0446b24d727ce45aed93fd42b9b675a_l-10778769-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "выпущена как символ крепких дружественных отношений между СССР и Болгарией."
+        },
+        { 
+            name: "1 рубль 60 лет СССР", 
+            year: 1982, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=5fdca1ec7dcbc3200255c677b71de533c8e70ecd-9386274-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "монета выпущена к 60‑летию создания СССР (договор об образовании Союза был подписан в 1922 году)."
+        },
+        { 
+            name: "1 рубль СССР Карл Маркс", 
+            year: 1983, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=3ff5fe826783c7993cc55ee13324d3082c299e07-5289438-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "монета выпущена в честь Карла Маркса — основоположника коммунистической идеологии, чьи труды легли в основу советской системы."
+        },
+        { 
+            name: "1 рубль СССР Терешкова В.В.", 
+            year: 1983, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=99ebb7228f66a934e69be06cb708bfbf_l-5284012-images-thumbs&n=13&n=13&w=690&h=460",
+            info: "монета посвящена Валентине Терешковой — первой в мире женщине‑космонавту. Её полёт на корабле «Восток‑6» длился почти трое суток (48 витков вокруг Земли) и завершился успешной посадкой в Алтайском крае."
+        },
+        { 
+            name: "1 рубль СССР Иван Федоров", 
+            year: 1983, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=d3853dedd47df8d2f2416ae53a264c74766ceeb5-5192545-images-thumbs&n=13&n=13&w=690&h=460",
+            info: "Иван Фёдоров — издатель первой точно датированной печатной книги на Руси («Апостол», 1564), основатель типографии, создатель первого печатного «Букваря» (1574) и Острожской Библии."
+        },
+        { 
+            name: "1 рубль СССР Менделеев Д.И.", 
+            year: 1984, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=289479ee951503c27d59b1994ec3d095cc33d915-4102221-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета посвящена выдающемуся учёному Дмитрию Ивановичу Менделееву — автору периодической таблицы химических элементов, разностороннему исследователю, педагогу и общественному деятелю."
+        },
+        { 
+            name: "1 рубль СССР Попов А.С", 
+            year: 1984, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=41ca1f44a2203b611a7a88ac7802927e09f330c9-4431911-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета посвящена Александру Степановичу Попову — изобретателю радио. 7 мая 1895 года (25 апреля по старому стилю) он впервые продемонстрировал радиоприёмник на заседании Русского физико‑химического общества."
+        },
+        { 
+            name: "1 рубль СССР Пушкин А.С", 
+            year: 1984, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=98499c5ad351dea85e0c5f9120c70540315f848b-4820816-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета посвящена Александру Сергеевичу Пушкину — основоположнику современного русского литературного языка, автору произведений «Евгений Онегин», «Борис Годунов», «Руслан и Людмила» и многих других."
+        },
+        { 
+            name: "1 рубль СССР Ленин В.И", 
+            year: 1985, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=6afc62eefa91585c9dd93b86321fd75b_l-9838103-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Первая массовая юбилейная монета СССР после 1965 года. Выпущена к столетию со дня рождения основателя советского государства."
+        },
+        { 
+            name: "1 рубль СССР 40 лет Победы", 
+            year: 1985, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=a3b3a3403766f571a5b6b86c044e84ae24494b2f-4012073-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета выпущена к 40‑летию Победы в Великой Отечественной войне — в память о подвиге советского народа и жертвах, понесённых в борьбе с нацистской Германией. Орден Отечественной войны, изображённый на реверсе, был учреждён в 1942 году и вручался участникам боевых действий"
+        },
+        { 
+            name: "1 рубль СССР Фестиваль молодежи", 
+            year: 1985, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=28102b53877cf5c03dee969b05286cc21e2fe05f-4220200-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета выпущена к XII Всемирному фестивалю молодёжи и студентов, который прошёл в Москве. В мероприятии участвовали около 26 тысяч гостей из более чем 150 стран мира. Эмблема фестиваля создана художником Р. З. Масаутовым"
+        },
+
+        { 
+            name: "1 рубль СССР Энгельс Ф.", 
+            year: 1985, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=7ba20cad21264565712a4d7c7ccf90de498d1210-5653325-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета посвящена Фридриху Энгельсу — философу, общественному деятелю, соавтору многих работ Карла Маркса и одному из создателей теории марксизма. После смерти Маркса Энгельс завершил и издал второй и третий тома «Капитала»."
+        },
+        { 
+            name: "1 рубль СССР год мира", 
+            year: 1986, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=c6f05e750677a5426483086cbe2293788397893d-5677725-images-thumbs&n=13&n=13&w=460&h=460",
+            info: " монета выпущена в рамках поддержки инициативы ООН по укреплению международного мира и разоружению."
+        },
+        { 
+            name: "1 рубль СССР Ломоносов М.В", 
+            year: 1986, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=b2c38f91be59c10d22aa7288d4749ce9_l-5236250-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета посвящена Михаилу Васильевичу Ломоносову — выдающемуся учёному-энциклопедисту, естествоиспытателю, химику, физику, астроному, поэту и филологу. Среди его заслуг: создание Московского университета (ныне МГУ), открытие атмосферы у Венеры, развитие физической химии, вклад в русскую литературу и филологию."
+        },
+        { 
+            name: "1 рубль СССР 175 лет Бородинской битве", 
+            year: 1987, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=8df4f4cd5b13a459cc2222e2b636c533_l-4392319-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монеты посвящены Бородинскому сражению (26 августа 1812 года) — ключевому событию Отечественной войны 1812 года между русской армией под командованием М. И. Кутузова и войсками Наполеона. Сражение стало символом стойкости и патриотизма русского народа. "
+        },
+        { 
+            name: "100 рублей СССР", 
+            year: 1988, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=901e09969c1d45fcf5f87c879747f85e_l-5383459-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета номиналом 100 рублей 1988 года выпускалась в СССР. Она относится к юбилейным монетам, посвящённым 1000-летию древнерусской монетной чеканки, и изображает златник Владимира Святославича"
+        },
+        { 
+            name: "150 рублей СССР", 
+            year: 1988, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=95257588fc8c32c61b5089bf3ac4446d-2436415-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета номиналом 150 рублей 1988 года выпускалась в СССР. Она относится к юбилейным монетам, посвящённым 1000-летию древнерусской литературы, и изображает сцену создания «Слова о полку Игореве»"
+        },
+        { 
+            name: "3 рубля СССР", 
+            year: 1989, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=3ccf5d0b9fb70eb55711d4f4785c64f75034fe9e-4395898-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета номиналом 3 рубля 1989 года с изображением первых общерусских монет относится к серии «500-летие единого Русского государства». Она была выпущена Ленинградским монетным двором (ЛМД)."
+        },
+
+        { 
+            name: "5 рублей СССР", 
+            year: 1989, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=167c655b332bdb6bbfda43ebd81293e5_l-6696526-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета номиналом 5 рублей 1989 года с изображением архитектурного ансамбля Регистан в Самарканде относится к серии «Памятники архитектуры». Она была выпущена Ленинградским монетным двором (ЛМД)"
+        },
+
+
+        { 
+            name: "1 рубль СССР Циолковский К.Е", 
+            year: 1987, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=49be3ac914f79ed985b62d821d6aa37d_l-13280984-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета посвящена Константину Эдуардовичу Циолковскому — учёному‑теоретику, основоположнику современной космонавтики. Среди его ключевых идей "
+        },
+        { 
+            name: "1 рубль СССР 70 лет Октября", 
+            year: 1987, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=e7433d746ed3b0a9fadbbf5d5ed9c39c_l-5663954-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета выпущена к 70‑летию Октябрьской революции 1917 года — ключевому событию российской и мировой истории XX века."
+        },
+
+        { 
+            name: "Купон 50 карбованцев", 
+            year: 1991, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=69c0d40c0d869bf998cdc7d8752b8095-5663061-images-thumbs&n=13&n=13&w=690&h=460",
+            info: "Временные суррогатные деньги, введенные на Украине для защиты внутреннего рынка. Использовались вместе с советским рублем."
+        },
+        { 
+            name: "100 рублей СССР", 
+            year: 1980, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=084e891310ba50b924fd857a4ae457d1_l-3979407-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "100 рублей 1980 года — памятная золотая монета, выпущенная к Летним Олимпийским играм в Москве 1980 года. Она относится к серии, посвящённой символам Олимпиады."
+        },
+        { 
+            name: "150 рублей СССР", 
+            year: 1980, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=f47a9292c7af49de7d682631e2a20849-4864596-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "150 рублей 1980 года — памятная платиновая монета, выпущенная к Летним Олимпийским играм в Москве 1980 года. Она относится к серии «История олимпийских игр» и посвящена античным бегунам. "
+        },
+        { 
+            name: "3 рубля СССР Сребреник Владимира", 
+            year: 1988, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=aad1025f53815808ae2b2fa38a8cdc32_l-2374603-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета 3 рубля 1988 года «Сребреник Владимира» была выпущена в СССР в рамках серии «1000-летие России», посвящённой 1000-летию древнерусской монетной чеканки. Она стала символом исторической преемственности и культурного наследия."
+        },
+        { 
+            name: "5 рублей СССР Петр Первый", 
+            year: 1988, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=d9a96b2051567a6907d042661f244a2b65e6065f-4507542-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета 5 рублей 1988 года «Памятник Петру Первому в Ленинграде» — памятная (юбилейная) монета СССР, посвящённая знаменитому монументу «Медный всадник». Она стала первой в серии «Соборы и памятники»."
+        },
+        { 
+            name: "50 рублей СССР", 
+            year: 1988, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=ff01bd8bed35e52382bcb75c0774212a9f29114bd10865b1-5254479-images-thumbs&n=13&n=13&w=432&h=576",
+            info: "Монета номиналом 50 рублей 1988 года выпускалась в СССР. Она относится к юбилейным монетам, посвящённым 1000-летию древнерусского зодчества, и изображает Софийский собор в Великом Новгороде."
+        },
+        { 
+            name: "3 рубля СССР", 
+            year: 1989, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=b9b5fea5eb59baf4d36bd3b2cdc05931beb54be5-4854982-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета номиналом 3 рубля 1989 года с изображением Московского Кремля относится к серии «500-летие единого Русского государства». Она была выпущена Московским монетным двором (ММД)"
+        },
+        { 
+            name: "25 рублей СССР", 
+            year: 1988, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=3bfe37a18e0b9fd470f4c1f7f822de24ff34225e-4464306-images-thumbs&n=13&n=13&w=690&h=460",
+            info: "Монета номиналом 25 рублей 1988 года выпускалась в СССР. Она относится к юбилейным монетам, посвящённым 1000-летию крещения Руси"
+        },
+
+        { 
+            name: "5 рублей СССР", 
+            year: 1989, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=8f7a41ce4131216d97e8dffa9a1909c37ff366b6-4954380-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета номиналом 5 рублей 1989 года с изображением собора Покрова на Рву в Москве (Покровского собора) относится к серии «Памятники архитектуры и исторические места России». Она была выпущена Ленинградским монетным двором (ЛМД)."
+        },
+        { 
+            name: "10 рублей СССР", 
+            year: 1980, 
+            type: "деньги", 
+            img: "https://avatars.mds.yandex.net/i?id=9892a8f83fcb19e6151b618a9550a716c0d05f4e-5243206-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Монета 10 рублей 1980 года — памятная серебряная монета, выпущенная к Летним Олимпийским играм в Москве 1980 года. Она относится к серии, посвящённой национальным видам спорта народов СССР и историческим спортивным дисциплинам. "
+        },
+        { 
+            name: "купон на мясо", 
+            year: 1982, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=ea69274313c843063fa5f6a3b6c034f5_l-9625729-images-thumbs&n=13&n=13&w=690&h=460",
+            info: "В Вологодской области талоны на масло и мясопродукты были введены в конце 1982 года. В сентябре вологжане получили талоны на животное масло и колбасные изделия. В других городах и районах области, включая Вологодский район, талоны появились позднее."
+        },
+        { 
+            name: "купон на колбасу", 
+            year: 1983, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=ee7cc642b760b7b1c117113cbf6eeab296b189ed-4460401-images-thumbs&n=13&n=13&w=690&h=460",
+            info: "Талоны на колбасу в СССР появились в рамках талонной системы, которая была введена в 1980-х годах из-за нарастающего дефицита товаров. Эта система стала одним из ярких символов экономического кризиса позднего советского периода."
+        },
+        { 
+            name: "купон на сахар", 
+            year: 1989, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=e626ada89df29b259bf0402b38762d98_l-3333951-images-thumbs&n=13&n=13&w=690&h=460",
+            info: "талоны на сахар стали одним из символов позднесоветского дефицита. Их введение показало, как попытка решить одну проблему (злоупотребление алкоголем) привела к другой (дефицит базовых продуктов) и усугубила социально‑экономический кризис в стране."
+        },
+        { 
+            name: "купон на чай", 
+            year: 1990, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=4f1e9fef43c65ac20e8dc61b5cdd317d_l-4987522-images-thumbs&n=13&n=13&w=690&h=460",
+            info: "Талоны на чай выдавались по месту прописки — в ЖЭКах, общежитиях или через профсоюзные организации на предприятиях. На талоне указывался месяц, наименование товара и допустимое количество"
+        },
+        { 
+            name: "купон на крупу", 
+            year: 1989, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=fd27134b788740667d8499aed24def74_sr-4613040-images-thumbs&n=13&n=13&w=432&h=576",
+            info: "Крупы также стали объектом нормирования. Талоны распределялись с учётом количества членов семьи. В некоторых случаях ограничивали количество товара «в одни руки», даже при наличии талона."
+        },
+        { 
+            name: "талон на соль", 
+            year: 1989, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=936b219df42c8de7901399fae280976e_l-3106771-images-thumbs&n=13&n=13&w=690&h=460",
+            info: "В начале 1980-х годов в СССР наблюдались перебои с поставками соли. В 1981 году Секретариат ЦК КПСС даже принимал специальное постановление по этому поводу. В период талонной системы соль также распределялась по талонам, хотя иногда её продавали и без них."
+        },
+        { 
+            name: "купон на стиральный порошок", 
+            year: 1989, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=904ba931c03d35d01628aa2147c13c21_sr-16489467-images-thumbs&n=13&n=13&w=432&h=576",
+            info: "Стиральный порошок стал объектом нормирования из-за дефицита моющих средств. Талоны выдавались по месту прописки — в ЖЭКах, общежитиях или через профсоюзные организации на предприятиях. На талоне указывался месяц, наименование товара и допустимое количество. "
+        },
+        { 
+            name: "купоны на хозяйственное и туалетное мыло", 
+            year: 1989, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=b8b02adbecad2fe7b12411f43a6e0918_sr-5859245-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Дефицит мыла возник из-за сокращения его производства в середине 1980-х годов. В результате в ряде областей ввели талоны на хозяйственное и туалетное мыло. Нормы выдачи могли различаться в зависимости от региона"
+        },
+        { 
+            name: "купон на спички", 
+            year: 1989, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=cc2129bcfbb2b1b80e93b59834e46db6_sr-5843546-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Спички также стали предметом нормирования. Например, в Березниках с 1 октября 1990 года по талонам стали распространять спички — 10 коробков на человека."
+        },
+        { 
+            name: "купон на телевизор", 
+            year: 1989, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=eb090c3216a314dc6c7d79e81c42a008_sr-5723597-images-thumbs&n=13&n=13&w=432&h=576",
+            info: "Талоны на телевизоры могли выдаваться отличившимся сотрудникам в качестве поощрения. Также существовала практика обмена старых телевизоров на новые с получением талона. Например, по правилам 1979 года, при сдаче старого радиоаппарата (в том числе телевизора) выдавался талон «Б», который давал право на покупку нового аппарата на льготных условиях. Талон действовал 30 календарных дней, включая день сдачи старого устройства"
+        },
+        { 
+            name: "купон на мебель", 
+            year: 1990, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=e02e7141429854aef35d7176e3cbda9e_l-5518476-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "Мебель также входила в число дефицитных товаров, распределяемых по талонам. Такие талоны могли выдаваться в рамках льготных программ, например, для ветеранов Великой Отечественной войны, которые получали их в специальных очередях. Распределение часто осуществлялось через государственные организации или профсоюзы"
+        },
+        { 
+            name: "купон на импортную обувь", 
+            year: 1989, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=7fd6e73755ee43ec33f616d9e4dbfd58_l-10702699-images-thumbs&n=13&n=13&w=690&h=460",
+            info: "Импортная обувь была особенно дефицитным товаром. В некоторых случаях талоны на неё выдавались колхозникам в рамках программ, связанных с сдачей сельхозпродукции (например, по программе «Урожай 90»). Также такие талоны могли распределяться через специальные магазины или по особым спискам"
+        },
+        { 
+            name: "купон на табак", 
+            year: 1990, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=21582981c83de11f2c482475c2ac2e28_l-10930201-images-thumbs&n=13&n=13&w=432&h=576",
+            info: "Талоны на табачные изделия появились в конце 1980-х — начале 1990-х годов на фоне нарастающего дефицита. Они выдавались по месту прописки или через предприятия. Нормы могли различаться в зависимости от региона и категории населения. Талоны действовали в течение определённого месяца, и по ним можно было приобрести ограниченное количество табачных изделий"
+        },
+        { 
+            name: "купон на бензин", 
+            year: 1990, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=7545ec770dce605a07bcd2362b5f2530_l-12569664-images-thumbs&n=13&n=13&w=690&h=460",
+            info: "Система талонов на бензин существовала в СССР с 1960-х годов. Для государственного транспорта талоны выдавали шофёрам на автобазах, они были действительны только с печатью предприятия. Частные автовладельцы покупали талоны в специальных местах — например, в Москве их продавали в кассах хозяйственных магазинов. Колодки на АЗС делились на государственные и частные"
+        },
+        { 
+            name: "купон на книги", 
+            year: 1990, 
+            type: "купоны", 
+            img: "https://avatars.mds.yandex.net/i?id=75b417203c043e6db4a13289005ebee6_l-5236410-images-thumbs&n=13&n=13&w=460&h=460",
+            info: "В 1970-х годах в СССР ввели систему обмена макулатуры на книги. За 20 кг старых газет и журналов можно было получить талон, который обменивался на дефицитное издание в книжном магазине. В последние годы существования СССР процедуру упростили — книги можно было приобрести прямо в пункте приёма макулатуры"
+        },
+
+
+        
+    ];
+
+   function renderCards(data) {
+        const container = document.getElementById('collection');
+        container.innerHTML = data.map((item) => `
+            <div class="card" onclick="openModal('${item.name}')">
+                <img src="${item.img}" alt="${item.name}">
+                <div class="card-content">
+                    <div class="tag">${item.type}</div>
+                    <div style="font-size: 0.9rem; margin-bottom: 5px;">Год: ${item.year}</div>
+                    <h3>${item.name}</h3>
+                </div>
+            </div>
+        `).join('');
+    }
+    function openModal(name) {
+        const item = database.find(element => element.name === name);
+        if (!item) return; 
+        const modal = document.getElementById('infoModal');
+        const content = document.getElementById('modalData');
+        
+        content.innerHTML = `
+            <img src="${item.img}" alt="${item.name}">
+            <h2>${item.name} (${item.year})</h2>
+            <p><strong>Краткая сводка:</strong></p>
+            <p>${item.info}</p>
+            <div class="stamp">ПРОВЕРЕНО</div>
+        `;
+        modal.style.display = "block";
+    }
+    function closeModal() {
+        document.getElementById('infoModal').style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('infoModal')) closeModal();
+    }
+
+    function search() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = database.filter(item => 
+            item.name.toLowerCase().includes(query) || item.year.toString().includes(query)
+        );
+        renderCards(filtered);
+    }
+
+    function filterCategory(category) {
+        if (category === 'все') return renderCards(database);
+        const filtered = database.filter(item => item.type === category);
+        renderCards(filtered);
+    }
+
+    renderCards(database);
+</script>
+
+</body>
+</html>
